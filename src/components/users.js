@@ -1,33 +1,50 @@
 import React, { Component } from "react";
-import { indexServices } from "../../services/index";
+// import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
+// import { indexServices } from "../services/index";
+import axios from 'axios';
+
+
+const URL = `https://randomuser.me/api/`;
 
 class Users extends Component {
   state = {
-    githubUsers: null,
+    githubUsers: '',
   };
+
+  abortController = new AbortController();
+
+  componentWillMount() {
+    this.getUser();
+  }
 
   getUser = async () => {
-    const res = await indexServices.getUsers();
+    try{
+    const res = await axios.get(URL,{signal:this.abortController.signal});
     this.setState({
-      githubUsers: res ? res.data.results : []
-    });
+      githubUsers: res.data.results
+    })
+    }catch(error) {
+      if (error.name === 'AbortError') return; 
+      throw error; 
+    };
   };
-
   componentWillUnmount() {
-    this.indexServices.abort();
+    this.abortController.abort();
   }
 
   render() {
     return (
       <>
         <input type="button" value="Show" onClick={this.getUser} />
-
+        {!this.state.githubUsers ? 
+        <p>LOading wait...</p>:
         <div>
           {this.state.githubUsers &&
             this.state.githubUsers.map((value, key) => (
               <h2 key={value.id}>name : {value.email}</h2>
             ))}
         </div>
+        }
       </>
     );
   }
